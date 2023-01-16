@@ -1,17 +1,48 @@
 const express = require("express")
-const app = express()
+const mongoose = require("mongoose");
 
-const {body, validationResult} = require("express-validator")
+const app = express()
+const url = "mongodb://127.0.0.1:27017/form" 
+
+mongoose.set("strictQuery", false)
+mongoose.connect(url,{useNewUrlParser: true})
+
+.then(()=>console.log("connected to mongo"))
+.catch((e)=>console.log("error de conexión es: "+ e));
+
+const userSchema = mongoose.Schema({
+    user: String,
+    password: String
+
+})
+
+
+const {body, validationResult} = require("express-validator");
+const { response } = require("express");
+const userModel = mongoose.model("user", userSchema)
+
+
+const verify = async (req)=>{
+    verificador = await userModel.findOne(req)
+    //console.log(verificador) 
+    return(verificador)
+}
+
+
+
+
+
 
 app.use(express.json())
 app.set("view engine","ejs")
 app.use(express.urlencoded({extended:true}))
 
+
 app.get("/",(req,res)=>{
     res.render("index")
 })
 
-app.post("/register", [
+app.post("/ingresar", [
     
     body("user","Ingrese user correcto")
         .exists()
@@ -22,24 +53,29 @@ app.post("/register", [
         .isLength({min:5})
 
 ],(req, res)=>{
-    const errors = validationResult(req);
-    /*/if(!errors.isEmpty()){
-        res.status(400).json({errors: errors.array()});
-        console.log(errors)
-    }/*/
 
     const error = validationResult(req)
-    if(!errors.isEmpty()){
+
+    if(!error.isEmpty()){
         console.log(req.body)
         const valores = req.body
-        const validaciones = errors.array()
+        const validaciones = error.array()
         res.render("index",{validaciones:validaciones, valores: valores})
     }else{
-        res.send("validacion exitosa")
-    }
-    
 
-})
+        verify(req.body).then((val) => {
+            if(val!==null){
+                res.send("existe");
+
+            }else{
+                res.send("no existe")
+            }
+            
+        })
+    
+    }          
+
+    })
 
 
 
