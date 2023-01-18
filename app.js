@@ -24,60 +24,80 @@ const userModel = mongoose.model("user", userSchema)
 
 const verify = async (req)=>{
     verificador = await userModel.findOne(req)
-    //console.log(verificador) 
     return(verificador)
 }
 
 
 
 
-
-
 app.use(express.json())
-app.set("view engine","ejs")
 app.use(express.urlencoded({extended:true}))
 
 
-app.get("/",(req,res)=>{
-    res.render("index")
-})
+
+
+//LOGIN
 
 app.post("/ingresar", [
     
     body("user","Ingrese user correcto")
-        .exists()
-        .isLength({min:5}),
+        .exists(),
+        
 
     body("password", "Ingrese password valida")
         .exists()
-        .isLength({min:5})
 
 ],(req, res)=>{
 
-    const error = validationResult(req)
+    verify(req.body).then((val) => 
+    {
+        if(val!==null){
+            return res.json({code: 200});
+            
+            
 
-    if(!error.isEmpty()){
-        console.log(req.body)
-        const valores = req.body
-        const validaciones = error.array()
-        res.render("index",{validaciones:validaciones, valores: valores})
-    }else{
-
-        verify(req.body).then((val) => {
-            if(val!==null){
-                res.send("existe");
-
-            }else{
-                res.send("no existe")
-            }
+        }else{
+            return res.json({code: 201});
+            
+        }
             
         })
-    
-    }          
-
     })
 
 
+
+//REGISTER
+
+app.post("/register", [
+    
+    body("user","Ingrese user de mas de 5 caracteres")
+        .exists(),
+
+    body("password", "Ingrese password de mas de 5 caracteres")
+        .exists()
+        
+],(req, res)=>{
+
+    
+    verify(req.body).then((val) => {
+    if(val!==null){
+        return res.json({code: 300}); ////este usuario ya existe
+
+    }else{
+        userModel.create(req.body); //crea usuario
+        return res.json({code: 301})
+
+        
+    }
+}
+)
+})
+
+
+
+
+
+// Escuchando......
 
 
 app.listen(3000, ()=>{
