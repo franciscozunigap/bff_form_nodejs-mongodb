@@ -15,7 +15,8 @@ mongoose.connect(url,{useNewUrlParser: true})
 const userSchema = mongoose.Schema({
     id: String,
     user: String,
-    password: String
+    password: String,
+    type: String
 
 })
 
@@ -30,7 +31,6 @@ const verify = async (req)=>{
     verificador = await userModel.findOne(req)
     return(verificador)
 }
-
 
 
 // view
@@ -52,10 +52,17 @@ app.use(express.urlencoded({extended:true}))
 //VIEW 
 
 app.get("/admin",(req, res)=>{
-    var users = {};
+    var users = [];
 
-    mostrar().then((val)=>{
-        res.send(val)
+    mostrar().then((val)=>{ //mandar solo lo necesario
+        //console.log(val)
+        for(var i = 0; i < val.length; i++){
+            users.push({user: val[i].user, id: val[i].id, type: val[i].type})
+
+        }
+        
+        //console.log(users)
+        res.send(users)
     })
     
     
@@ -79,7 +86,14 @@ app.post("/ingresar", [
     verify(req.body).then((val) => 
     {
         if(val!==null){
-            return res.json({code: 200});
+            
+            if(val.type=='admin'){
+                return res.json({code: 202});
+
+            }else{
+                return res.json({code: 200});
+
+            }
             
         
         }else{
@@ -89,13 +103,7 @@ app.post("/ingresar", [
             
         })
     })
-/*/
 
-    //usuario a crear está en req.body (no posee id)
-    req.body.id = uuid(); // se le asigna id
-    //userModel.create(req.body); //crea usuario
-    return res.json({code: 301})
-    /*/
 
 
 //REGISTER
@@ -118,16 +126,19 @@ app.post("/register", [
 
     }else{
         //usuario a crear está en req.body (no posee id)
-        new_body = {user: req.body.user, password: req.body.password, id: uuid()}
-
+        new_body = {user: req.body.user, password: req.body.password, id: uuid(), type: req.body.type}
         userModel.create(new_body); //crea usuario
-        return res.json({code: 301})
+            return res.json({code: 301})
+            
+
+        }
+        
 
         
     }
-}
+)}
 )
-})
+
 
 // Update
 app.post('/update-user', function(req, res) {
