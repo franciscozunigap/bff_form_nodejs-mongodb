@@ -1,13 +1,12 @@
 const express = require("express")
 const mongoose = require("mongoose");
-
 const crypto = require("crypto");
-
 const bycrypt = require("bcryptjs")
-
 const {v4: uuid} = require("uuid");
 const {body, validationResult} = require("express-validator");
 const { response } = require("express");
+
+
 const app = express()
 const url = "mongodb://127.0.0.1:27017/form" 
 
@@ -55,7 +54,7 @@ const sesionModel = mongoose.model("sesion", sesionSchema, "sesion")
 
 
 
-// verificador
+// verificadores
 
 const verify = async (req)=>{
     verificador = await userModel.findOne(req)
@@ -69,7 +68,7 @@ const verify_sesion = async (req)=>{
 
 
 
-// view
+// view funtio
 
 const mostrar = async ()=>{
     
@@ -92,14 +91,14 @@ app.use(express.urlencoded({extended:true}))
 app.get("/admin",(req, res)=>{
     var users = [];
 
-    mostrar().then((val)=>{ //mandar solo lo necesario
-        //console.log(val)
+    mostrar().then((val)=>{ 
+        
         for(var i = 0; i < val.length; i++){
             users.push({user: val[i].user, id: val[i].id, type: val[i].type})
 
         }
         
-        //console.log(users)
+      
         res.send(users)
     })
     
@@ -155,8 +154,6 @@ app.post("/ingresar", [
             
             sesion_password= decryptedData.toString() // desencriptada
 
-            //console.log(sesion_password)
-
             //delete sesion
 
             sesionModel.deleteOne({user: sesion_user},
@@ -166,6 +163,7 @@ app.post("/ingresar", [
                             res.json({code: 400}) // no eliminado
                         } else {
                             
+
             // fusionar user y password ingresada
 
             login_sesion = {user: sesion_user, password: sesion_password}
@@ -173,16 +171,14 @@ app.post("/ingresar", [
             // comprobar ingreso de la fusión
 
 
-
             verify({user: sesion_user}).then((val) => {
                 if(val!==null){
 
-                    //desencriptar y comprobar logindata
+                    //desencriptar password de base de datos y comprobar login_sesion
 
                     const passwordEnteredByUser = sesion_password
                     const hash = val.password
             
-                    //console.log(hash)
 
                     bycrypt.compare(passwordEnteredByUser, hash, function(error, isMatch) {
                         if (error) {
@@ -209,31 +205,15 @@ app.post("/ingresar", [
                 
                     
                 })
-                            
-
-                        }
-                 
-            
+             }
             })
 
-
-
-    
         }else{
             res.json({error: "no existe este usuario en sesión"})
                 
     
-            }
-            
-    
-        })
-
-
-    
-
-
-    
-    
+            }    
+        })    
     })
 
 
@@ -262,7 +242,6 @@ app.post("/register", [
 
     verify_sesion({user: req.body.user}).then((val) => {
         if(val!==null){
-            //console.log(val)
             sesion_user= req.body.user
             sesion_password_encrypted= req.body.password
             sesion_privateKey= val.private_key
@@ -281,8 +260,6 @@ app.post("/register", [
             
             
             sesion_password= decryptedData.toString() // desencriptada
-
-            //console.log(sesion_password)
 
 
             //delete sesion
@@ -311,34 +288,18 @@ app.post("/register", [
                     return res.json({code: 201});
                     
                 }
-                
-                    
+
                 })
-                            
-
-                }
-                 
-            
-            })
-
-
-
-    
-        }else{
-            res.json({error: "no existe este usuario en sesión"})
-                
-    
             }
-            
-    
         })
 
-    })
-
-
+        }else{
+            res.json({error: "no existe este usuario en sesión"})
     
-
-
+            }
+    
+        })
+    })
 
 
 
@@ -407,9 +368,6 @@ app.post("/usersesion", [
         if(val!==null){
             // generar sesion
 
-            //console.log(val)
-            
-
             const { publicKey, privateKey } = crypto.generateKeyPairSync("rsa", {
                 modulusLength: 2048,
                 });
@@ -433,8 +391,7 @@ app.post("/usersesion", [
                 public_key: publica
             }
 
-            
-            //console.log(sesion)
+        
 
             sesionModel.create(sesion)
 
@@ -446,7 +403,6 @@ app.post("/usersesion", [
 
 
             return res.json(msj)
-            //return res.json({code: 200});
          
         
         }else{
@@ -456,11 +412,6 @@ app.post("/usersesion", [
             
         })
 
-
-
-
-
-    
     })
 
 
@@ -479,10 +430,7 @@ app.post("/usersesion_register", [
     {
         if(val==null){
             // generar sesion
-
-            //console.log(val)
             
-
             const { publicKey, privateKey } = crypto.generateKeyPairSync("rsa", {
                 modulusLength: 2048,
                 });
@@ -505,8 +453,6 @@ app.post("/usersesion_register", [
                 public_key: publica
             }
 
-            
-            //console.log(sesion)
 
             sesionModel.create(sesion)
 
@@ -517,7 +463,6 @@ app.post("/usersesion_register", [
 
 
             return res.json(msj)
-            //return res.json({code: 200});
          
         
         }else{
@@ -526,10 +471,6 @@ app.post("/usersesion_register", [
         }
             
         })
-
-
-
-
 
     
     })
